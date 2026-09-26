@@ -66,6 +66,14 @@ class OrganizationEngine:
         rel_source = str(orig_p.relative_to(root)).replace("\\", "/")
         rel_target = str(safe_target_path.relative_to(root)).replace("\\", "/") if action_type != "delete" else None
 
+        target_folder_rel = None
+        if action_type != "delete":
+            try:
+                rel = str(target_dir.relative_to(root)).replace("\\", "/")
+                target_folder_rel = "" if rel == "." else rel
+            except ValueError:
+                target_folder_rel = str(target_dir).replace("\\", "/")
+
         return {
             "id": str(uuid.uuid4()),
             "action_type": action_type,
@@ -73,7 +81,9 @@ class OrganizationEngine:
             "original_name": orig_p.name,
             "target_path": str(safe_target_path) if action_type != "delete" else None,
             "target_name": safe_target_path.name if action_type != "delete" else None,
-            "target_folder": str(target_dir.relative_to(root)).replace("\\", "/") if action_type != "delete" else None,
+            "target_folder": target_folder_rel,
+            "suggested_name": safe_target_path.name if action_type != "delete" else orig_p.name,
+            "suggested_folder": target_folder_rel if target_folder_rel is not None else "",
             "relative_source": rel_source,
             "relative_target": rel_target,
             "ai_suggestion": ai_suggestion or f"Move to {rel_target}",

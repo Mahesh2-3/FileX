@@ -140,6 +140,10 @@ class TestAIFileManager(unittest.TestCase):
             ai_suggestion="Documents/Projects/Project_Final_Report.docx",
             ai_reasoning="Report document structure",
         )
+        self.assertEqual(op["suggested_name"], "Project_Final_Report.docx")
+        self.assertEqual(op["suggested_folder"], "Documents/Projects")
+        self.assertEqual(op["target_name"], "Project_Final_Report.docx")
+        self.assertEqual(op["target_folder"], "Documents/Projects")
 
         # 1. Execute
         exec_res = self.org_engine.execute_batch([op])

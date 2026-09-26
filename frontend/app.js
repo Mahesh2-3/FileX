@@ -510,7 +510,13 @@ async function triggerAIAnalysis() {
       updateAnalysisProgress(selectedFiles.length, selectedFiles.length, "Complete", null);
     }
 
-    state.proposedOperations = proposedOperations;
+    state.proposedOperations = proposedOperations.map((op) => ({
+      ...op,
+      suggested_name: op.suggested_name || op.target_name || op.original_name,
+      suggested_folder: op.suggested_folder !== undefined ? op.suggested_folder : (op.target_folder !== undefined ? op.target_folder : "Organized"),
+      target_name: op.target_name || op.suggested_name || op.original_name,
+      target_folder: op.target_folder !== undefined ? op.target_folder : (op.suggested_folder !== undefined ? op.suggested_folder : "Organized"),
+    }));
 
     // Small delay to allow the user to see the 100% completion state
     await new Promise((resolve) => setTimeout(resolve, 400));
@@ -559,11 +565,13 @@ function updateAnalysisProgress(current, total, filename, operation) {
   if (operation && elements.analysisMiniFeed) {
     const row = document.createElement("div");
     row.className = "feed-row";
-    const suggestedTarget = `${operation.suggested_folder || "Organized"}/${operation.suggested_name || filename}`;
+    const targetFolder = operation.suggested_folder !== undefined ? operation.suggested_folder : (operation.target_folder || "Organized");
+    const targetName = operation.suggested_name || operation.target_name || filename;
+    const suggestedTarget = targetFolder ? `${targetFolder}/${targetName}` : targetName;
     row.innerHTML = `
       <div class="feed-row-left">
         <span class="feed-check">✓</span>
-        <span class="feed-name">${escapeHtml(operation.original_name || filename)}</span>
+        <span class="feed-name">${escapeHtml(targetName || operation.original_name || filename)}</span>
       </div>
       <span class="badge badge-neutral">${escapeHtml(operation.category || "Classified")}</span>
     `;
@@ -624,10 +632,10 @@ function renderProposals() {
         </div>
       </td>
       <td>
-        <input type="text" class="inline-edit-input op-name-input" data-idx="${idx}" value="${escapeHtml(op.suggested_name || op.original_name)}" />
+        <input type="text" class="inline-edit-input op-name-input" data-idx="${idx}" value="${escapeHtml(op.suggested_name || op.target_name || op.original_name)}" />
       </td>
       <td>
-        <input type="text" class="inline-edit-input op-folder-input" data-idx="${idx}" value="${escapeHtml(op.suggested_folder || "Organized")}" />
+        <input type="text" class="inline-edit-input op-folder-input" data-idx="${idx}" value="${escapeHtml(op.suggested_folder !== undefined ? op.suggested_folder : (op.target_folder || "Organized"))}" />
       </td>
       <td>
         <div class="reasoning-text" title="${escapeHtml(op.ai_reasoning || "")}">
@@ -659,16 +667,18 @@ function renderProposals() {
   tbody.querySelectorAll(".op-name-input").forEach((input) => {
     input.addEventListener("input", (e) => {
       const idx = parseInt(e.target.dataset.idx, 10);
-      state.proposedOperations[idx].suggested_name = e.target.value.trim();
-      state.proposedOperations[idx].target_name = e.target.value.trim();
+      const val = e.target.value.trim();
+      state.proposedOperations[idx].suggested_name = val;
+      state.proposedOperations[idx].target_name = val;
     });
   });
 
   tbody.querySelectorAll(".op-folder-input").forEach((input) => {
     input.addEventListener("input", (e) => {
       const idx = parseInt(e.target.dataset.idx, 10);
-      state.proposedOperations[idx].suggested_folder = e.target.value.trim();
-      state.proposedOperations[idx].target_folder = e.target.value.trim();
+      const val = e.target.value.trim();
+      state.proposedOperations[idx].suggested_folder = val;
+      state.proposedOperations[idx].target_folder = val;
     });
   });
 
@@ -699,10 +709,16 @@ async function executeApprovedOperations() {
   // Pre-process final target paths in case user edited target_name or target_folder inline
   const operationsPayload = approvedOps.map((op) => {
     const copy = { ...op };
-    if (state.currentRoot && copy.suggested_folder && copy.suggested_name) {
-      const folderParts = copy.suggested_folder.replace(/\\/g, "/").split("/").filter(Boolean);
+    const folder = copy.suggested_folder !== undefined ? copy.suggested_folder : copy.target_folder;
+    const name = copy.suggested_name || copy.target_name || copy.original_name;
+    if (state.currentRoot && folder !== undefined && name) {
+      const folderParts = folder.replace(/\\/g, "/").split("/").filter(Boolean);
       const rootStr = state.currentRoot.replace(/\\/g, "/");
-      copy.target_path = `${rootStr}/${folderParts.join("/")}/${copy.suggested_name}`;
+      copy.target_name = name;
+      copy.target_folder = folderParts.join("/");
+      copy.target_path = folderParts.length > 0
+        ? `${rootStr}/${folderParts.join("/")}/${name}`
+        : `${rootStr}/${name}`;
     }
     return copy;
   });

@@ -156,6 +156,8 @@ async def analyze_files(req: AnalyzeRequest):
                 ai_reasoning=analysis.get("reasoning"),
             )
             op["category"] = analysis.get("category")
+            op["suggested_name"] = op.get("suggested_name") or op.get("target_name") or analysis.get("suggested_name")
+            op["suggested_folder"] = op.get("suggested_folder") or op.get("target_folder") or analysis.get("suggested_folder")
             op["confidence"] = analysis.get("confidence", 0.8)
             op["engine"] = analysis.get("engine", "local")
             op["thumbnail_b64"] = content.get("thumbnail_b64")
@@ -230,6 +232,8 @@ async def analyze_files_stream(req: AnalyzeRequest):
                     ai_reasoning=analysis.get("reasoning"),
                 )
                 op["category"] = analysis.get("category")
+                op["suggested_name"] = op.get("suggested_name") or op.get("target_name") or analysis.get("suggested_name")
+                op["suggested_folder"] = op.get("suggested_folder") or op.get("target_folder") or analysis.get("suggested_folder")
                 op["confidence"] = analysis.get("confidence", 0.8)
                 op["engine"] = analysis.get("engine", "local")
                 op["thumbnail_b64"] = content.get("thumbnail_b64")
