@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches and virtual environments
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+ENV/
+
+# Environment and sensitive secrets
+.env
+*.env.local
+
+# Databases and local state
+*.db
+*.sqlite
+*.sqlite3
+file_manager.db
+test_operations.db
+
+# Test directories and temporary data
+test_files/
+*.log
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
